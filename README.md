@@ -1,1 +1,1 @@
-# Git-class
+# This is Git-class. Everything looks good. 

@@ -73,14 +73,14 @@ Resources:
 Outputs:
   DbConnectionString:
     Description: A connection string to use for the DB
-    Value: !Sub "${orcleRds.Endpoint.Address}:${oracleRds.Endpoint.Port}/eqrs"
+    Value: !Sub "${OracleRds.Endpoint.Address}:${OracleRds.Endpoint.Port}/eqrs"
     Export:
       Name: !Sub "${AWS::StackName}-ConnString"
   DbPort:
-    Value: !GetAtt oracleRds.Endpoint.Port
+    Value: !GetAtt OracleRds.Endpoint.Port
     Export:
       Name: !Sub "${AWS::StackName}-DbPort"
   DbUrl:
-    Value: !GetAtt oracleRds.Endpoint.Address
+    Value: !GetAtt OracleRds.Endpoint.Address
     Export:
       Name: !Sub "${AWS::StackName}-DbUrl"

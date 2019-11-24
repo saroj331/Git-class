@@ -1,147 +1,86 @@
+---
 AWSTemplateFormatVersion: 2010-09-09
-Description: >-
-  creates a DB nested stacks involving instances, schedulers for ${RDS_RESOURCE_NAME}
-Mappings:
-  LifeCycleMap:
-    SBX:
-      VPCSecurityGroups:
-        - sg-05f1994a6be5239ee
-      SubnetGroupName: eqrs-sbx-rds-subnet-group
-      OptionGroupName: sbx-options-group-ee-12-2
-    DEV:
-      VPCSecurityGroups:
-        - sg-0bcd73e4177195614
-      SubnetGroupName: eqrs-dev-rds-subnet-group
-      OptionGroupName: dev-options-group-ee-12-2
-    TEST:
-      VPCSecurityGroups:
-        - sg-09b188172e972b934
-      SubnetGroupName: eqrs-test-rds-subnet-group
-      OptionGroupName: test-options-group-ee-12-2
-    IMPL:
-      VPCSecurityGroups:
-        - sg-00b1fe84e4319d195
-      SubnetGroupName: eqrs-impl-rds-subnet-group
-      OptionGroupName: impl-options-group-ee-12-2
-    PROD:
-      VPCSecurityGroups:
-        - sg-0f213fb9141a23838
-      SubnetGroupName: eqrs-prod-rds-subnet-group
-      OptionGroupName: prod-options-group-ee-12-2
+Description: Creates An RDS Instance for data refresh
+
 Parameters:
   LifeCycle:
     Type: String
-    AllowedValues:
-      - SBX
-      - DEV
-      - TEST
-      - IMPL
-      - ITF
-      - PREPROD
-      - PROD
-  SetNumber:
-    Type: Number
-  AppName:
+    Default: sbx
+  DbSubnetGroup:
     Type: String
-  DBSnapshotIdentifier:
-    Description: >-
-      The RDS snapshot id to restore to the new DB instance. Left empty if new
-      instance is created
-    Type: String
-    Default: ''
-  MasterUsername:
+    Default: eqrs-sbx-rds-subnet-group
+  DbUserName:
     Type: String
     Default: admin
-  CreatedBy:
+  DbPassword:
     Type: String
-    AllowedPattern: '^[a-zA-Z0-9]*$'
-  CreatedFor:
+    NoEcho: true
+  ParameterGroupName:
     Type: String
-  DBParameterGroupName:
+    Default: default.oracle-ee-12.1
+  SecurityGroup:
     Type: String
-    Default: eqrs-oracle-ee-12-2
-  DBInstanceId:
-    Description: >-
-      The name of the database identifier. should follow naming standard for example mcsmalldata-rds-eqrs-dev01
+    Default: sg-05f1994a6be5239ee
+  AllocatedStorage:
     Type: String
-    AllowedPattern: '^[a-zA-Z0-9-_]*$'
-  DBInstanceClass:
+    Default: "20"
+  KmsKeyId:
     Type: String
-    Default: db.m4.xlarge
-  OptionGroupName:
-    Type: String
-    Default: ssl-option
-  MultiAZMode:
-    Type: String
-    Default: false
-  AutoStartRequired:
-    AllowedValues:
-      - 'true'
-      - 'false'
-    Default: 'false'
-    Description: >-
-      To auto start the instance based on cron expression business day
-    Type: String
-  DailySnapshotRequired:
-    AllowedValues:
-      - 'true'
-      - 'false'
-    Default: 'false'
-    Description: >-
-      To create a snapshot daily
-    Type: String   
+    Default: ""
+
 Conditions:
-  CreateStartScheduler: !Equals 
-    - !Ref AutoStartRequired
-    - true
-  CreateSnapshotScheduler: !Equals 
-    - !Ref DailySnapshotRequired
-    - true
+  IsProd: !Or
+    - !Equals
+      - !Ref LifeCycle
+      - "prod"
+    - !Equals
+      - !Ref LifeCycle
+      - "prodpreview"
 
 Resources:
-  InstanceStack:
-    Type: 'AWS::CloudFormation::Stack'
+  OracleRds:
+    Type: AWS::RDS::DBInstance
+    DeletionPolicy: Snapshot
     Properties:
-      TemplateURL: >-
-        https://s3.amazonaws.com/pipeliners-cf-templates/rds/rds-instance-create-template.txt
-      Parameters:
-        DBSnapshotIdentifier: !Ref DBSnapshotIdentifier
-        LifeCycle: !Ref LifeCycle
-        MultiAZMode: !Ref MultiAZMode
-        MasterUsername: !Ref MasterUsername
-        DBParameterGroupName: !Ref DBParameterGroupName
-        OptionGroupName: !Ref OptionGroupName
-        DBInstanceId: !Ref DBInstanceId
-        DBInstanceClass: !Ref DBInstanceClass
-        RdsResourceName: ${RDS_RESOURCE_NAME}
-        AppName: !Ref AppName
-        SetNumber: !Ref SetNumber
-        CreatedBy: !Ref CreatedBy
-        CreatedFor: !Ref CreatedFor
-      TimeoutInMinutes: '60'
-  SnapshotStack:
-    Type: 'AWS::CloudFormation::Stack'
-    Condition : 'CreateSnapshotScheduler'
-    Properties:
-      TemplateURL: >-
-        https://s3.amazonaws.com/pipeliners-cf-templates/rds/rds-snapshot-create-template.txt
-      Parameters:
-        DBInstanceId: !GetAtt InstanceStack.Outputs.InstanceId
-      TimeoutInMinutes: '60'
-  StartSchedulerStack:
-    Type: 'AWS::CloudFormation::Stack'
-    Condition : 'CreateStartScheduler'
-    Properties:
-      TemplateURL: >-
-        https://s3.amazonaws.com/pipeliners-cf-templates/rds/rdsStartRuleTemplate.txt
-      Parameters:
-        DBInstanceId: !GetAtt InstanceStack.Outputs.InstanceId
-      TimeoutInMinutes: '60'
-  StopSchedulerStack:
-    Type: 'AWS::CloudFormation::Stack'
-    Properties:
-      TemplateURL: >-
-        https://s3.amazonaws.com/pipeliners-cf-templates/rds/rdsStopRuleTemplate.txt
-      Parameters:
-        DBInstanceId: !GetAtt InstanceStack.Outputs.InstanceId
-      TimeoutInMinutes: '60'
+      DBInstanceIdentifier: !Sub "${AWS::StackName}-oracle"
+      AllocatedStorage: !Ref AllocatedStorage
+      EnableCloudwatchLogsExports:
+        - oracle
+      DBInstanceClass: !If [ IsProd,  "db.m5.2xlarge", "db.t2.small" ]
+      StorageType: gp2
+      DBName: eqrs
+      DBParameterGroupName: !Ref ParameterGroupName
+      DBSubnetGroupName: !Ref DbSubnetGroup
+      Engine: oracle-ee
+      DeleteAutomatedBackups : true
+      CopyTagsToSnapshot: true
+      BackupRetentionPeriod: !If [ IsProd,  7, 1 ]
+      AutoMinorVersionUpgrade: true
+      EngineVersion: "12.1.0.2.v18"
+      MasterUsername: !Ref DbUserName
+      MasterUserPassword: !Ref DbPassword
+      VPCSecurityGroups:
+        - !Ref SecurityGroup
+      EnableIAMDatabaseAuthentication: true
+      MultiAZ: !If [ IsProd, true, false ]
+      Port: "1521"
+      DeletionProtection: true
+      StorageEncrypted: true
+      KmsKeyId: !Ref KmsKeyId
+      MonitoringRoleArn: !Sub "arn:aws:iam::${AWS::AccountId}:role/RDS_Enhanced_Monitoring"
+      MonitoringInterval: !If [ IsProd, 1, 60 ]
+
+Outputs:
+  DbConnectionString:
+    Description: A connection string to use for the DB
+    Value: !Sub "${orcleRds.Endpoint.Address}:${oracleRds.Endpoint.Port}/eqrs"
+    Export:
+      Name: !Sub "${AWS::StackName}-ConnString"
+  DbPort:
+    Value: !GetAtt oracleRds.Endpoint.Port
+    Export:
+      Name: !Sub "${AWS::StackName}-DbPort"
+  DbUrl:
+    Value: !GetAtt oracleRds.Endpoint.Address
+    Export:
+      Name: !Sub "${AWS::StackName}-DbUrl"

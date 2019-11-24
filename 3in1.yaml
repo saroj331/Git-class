@@ -46,7 +46,7 @@ Resources:
       AllocatedStorage: !Ref AllocatedStorage
       EnableCloudwatchLogsExports:
         - oracle
-      DBInstanceClass: !If [ IsProd,  "db.m5.2xlarge", "db.t2.small" ]
+      DBInstanceClass: db.m4.large
       StorageType: gp2
       DBName: eqrs
       DBParameterGroupName: !Ref ParameterGroupName
@@ -57,6 +57,7 @@ Resources:
       BackupRetentionPeriod: !If [ IsProd,  7, 1 ]
       AutoMinorVersionUpgrade: true
       EngineVersion: "12.1.0.2.v18"
+      LicenseModel: bring-your-own-license
       MasterUsername: !Ref DbUserName
       MasterUserPassword: !Ref DbPassword
       VPCSecurityGroups:

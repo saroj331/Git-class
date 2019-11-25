@@ -56,7 +56,7 @@ Resources:
       CopyTagsToSnapshot: true
       BackupRetentionPeriod: !If [ IsProd,  7, 1 ]
       AutoMinorVersionUpgrade: true
-      EngineVersion: "12.1.0.2.v18"
+      EngineVersion: "12.2.0.1.ru-2018-10.rur-2018-10.r1"
       LicenseModel: bring-your-own-license
       MasterUsername: !Ref DbUserName
       MasterUserPassword: !Ref DbPassword

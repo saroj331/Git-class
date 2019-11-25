@@ -69,6 +69,7 @@ Resources:
       MonitoringRoleArn: !Join
         - ''
         - - 'arn:aws:iam::'
-        - ':role/RDS_Enhanced_Monitoring'
+          - '!Ref AWS::AccountId'
+          - ':role/RDS_Enhanced_Monitoring'
       
 

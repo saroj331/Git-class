@@ -17,7 +17,7 @@ Parameters:
     NoEcho: true
   ParameterGroupName:
     Type: String
-    Default: default.oracle-ee-12.1
+    Default: default.oracle-ee-12.2
   SecurityGroup:
     Type: String
     Default: sg-05f1994a6be5239ee
@@ -56,7 +56,6 @@ Resources:
       CopyTagsToSnapshot: true
       BackupRetentionPeriod: !If [ IsProd,  7, 1 ]
       AutoMinorVersionUpgrade: true
-      EngineVersion: "12.2.0.1.ru-2018-10.rur-2018-10.r1"
       LicenseModel: bring-your-own-license
       MasterUsername: !Ref DbUserName
       MasterUserPassword: !Ref DbPassword

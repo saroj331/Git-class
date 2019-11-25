@@ -59,12 +59,16 @@ Resources:
       MasterUserPassword: !Ref DbPassword
       VPCSecurityGroups:
         - !Ref SecurityGroup
-      EnableIAMDatabaseAuthentication: false
+      EnableIAMDatabaseAuthentication: true
       MultiAZ: !If [ IsProd, true, false ]
       Port: '1521'
       DeletionProtection: true
       StorageEncrypted: true
-      KmsKeyId: !Ref KmsKeyId
-      MonitoringRoleArn: !Sub "arn:aws:iam::${AWS::AccountId}:role/RDS_Enhanced_Monitoring"
-      MonitoringInterval: !If [ IsProd, 1, 60 ]
+      KmsKeyId: !ImportValue RdsKmsKeyArn
+      MonitoringInterval: 5
+      MonitoringRoleArn: !Join
+        - ''
+        - - 'arn:aws:iam::'
+        - ':role/RDS_Enhanced_Monitoring'
+      
 

@@ -1,0 +1,125 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: >-
+  creates a new Oracle DB instance 
+Mappings:
+  LifeCycleMap:
+    SBX:
+      VPCSecurityGroups:
+        - sg-05f1994a6be5239ee
+      SubnetGroupName: eqrs-sbx-rds-subnet-group
+      OptionGroupName: sbx-options-group-ee-12-2
+    DEV:
+      VPCSecurityGroups:
+        - sg-0bcd73e4177195614
+      SubnetGroupName: eqrs-dev-rds-subnet-group
+      OptionGroupName: dev-options-group-ee-12-2
+    TEST:
+      VPCSecurityGroups:
+        - sg-09b188172e972b934
+      SubnetGroupName: eqrs-test-rds-subnet-group
+      OptionGroupName: test-options-group-ee-12-2
+    IMPL:
+      VPCSecurityGroups:
+        - sg-00b1fe84e4319d195
+      SubnetGroupName: eqrs-impl-rds-subnet-group
+      OptionGroupName: impl-options-group-ee-12-2
+    PROD:
+      VPCSecurityGroups:
+        - sg-0f213fb9141a23838
+      SubnetGroupName: eqrs-prod-rds-subnet-group
+      OptionGroupName: prod-options-group-ee-12-2
+  
+Parameters:
+  RdsResourceName:
+    Type: String
+  AppName:
+    Type: String  
+  LifeCycle:
+    Type: String
+    Default: SBX
+    AllowedValues:
+      - SBX
+      - DEV
+      - TEST
+      - IMPL
+      - PROD
+
+  Engine:
+    Description: 'The engine type like oracle, mysql, aurora etc.'
+    Type: String
+    Default: oracle-ee
+     
+    
+  MasterUsername:
+    Type: String
+    Default: admin
+  Port:
+    Type: String
+    Default: '1525'
+  MultiAZMode:
+    Type: String
+    Default: false
+  DBName:
+    Type: String
+    Default: oracle
+  AllocatedStorage:
+    Type: String
+    Default: '20'
+  DBInstanceClass:
+    Type: String
+    Default: db.m4.xlarge
+  OptionGroupName:
+    Type: String
+    Default: ssl-option
+  DBParameterGroupName:
+    Type: String
+    Default: eqrs-oracle-ee-12-2
+  
+Resources:
+  DBInstance:
+    Type: 'AWS::RDS::DBInstance'
+    DeletionPolicy: Snapshot
+    Properties:
+      AllocatedStorage: !Ref AllocatedStorage
+      DBName: !Ref DBName
+      StorageType: gp2
+      DBSubnetGroupName: !FindInMap 
+        - LifeCycleMap
+        - !Ref LifeCycle
+        - SubnetGroupName
+      DBParameterGroupName: !Ref DBParameterGroupName
+      VPCSecurityGroups: !FindInMap 
+        - LifeCycleMap
+        - !Ref LifeCycle
+        - VPCSecurityGroups
+     
+      CopyTagsToSnapshot: true
+      StorageEncrypted: true
+      OptionGroupName: !FindInMap 
+        - LifeCycleMap
+        - !Ref LifeCycle
+        - OptionGroupName
+      MultiAZ: !Ref MultiAZMode
+      DBInstanceClass: !Ref DBInstanceClass
+      Engine: !Ref Engine
+      EngineVersion: 12.2.0.1.ru-2019-10.rur-2019-10.r1
+      LicenseModel: bring-your-own-license
+      Port: !Ref Port
+      MasterUsername: !Ref MasterUsername
+      MasterUserPassword: !Sub 
+        - '{{resolve:ssm-secure:${LifeCycle}-RDS-ADMIN-PWD:1}}'
+        - LifeCycle: !Ref LifeCycle
+    
+    
+
+      Tags:
+        - Key: Lifecycle
+          Value: !Ref LifeCycle
+        
+            
+Outputs:
+  InstanceId:
+    Description: InstanceId of the newly created RDS Instance
+    Value: !Ref DBInstance
+    Export:
+      Name: !Ref RdsResourceName

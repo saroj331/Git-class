@@ -4,10 +4,10 @@ Description: Creates An RDS Instance for data refresh
 Parameters:
   LifeCycle:
     Type: String
-    Default: sbx
+    Default: test
   DbSubnetGroup:
     Type: String
-    Default: eqrs-sbx-rds-subnet-group
+    Default: eqrs-test-rds-subnet-group
   DbUserName:
     Type: String
     Default: admin
@@ -19,7 +19,7 @@ Parameters:
     Default: default.oracle-ee-12.1
   SecurityGroup:
     Type: String
-    Default: sg-05f1994a6be5239ee
+    Default: sg-09b188172e972b934
   AllocatedStorage:
     Type: String
     Default: "20"

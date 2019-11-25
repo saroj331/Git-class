@@ -1,7 +1,6 @@
 ---
 AWSTemplateFormatVersion: 2010-09-09
 Description: Creates An RDS Instance for data refresh
-
 Parameters:
   LifeCycle:
     Type: String
@@ -17,7 +16,7 @@ Parameters:
     NoEcho: true
   ParameterGroupName:
     Type: String
-    Default: default.oracle-ee-12.2
+    Default: default.oracle-ee-12.1
   SecurityGroup:
     Type: String
     Default: sg-05f1994a6be5239ee
@@ -38,20 +37,19 @@ Conditions:
       - "prodpreview"
 
 Resources:
-  MyDB:
-    Type: AWS::RDS::DBInstance
+  OracleRds:
+    Type: 'AWS::RDS::DBInstance'
     DeletionPolicy: Snapshot
     Properties:
-      DBInstanceIdentifier: !Sub "${AWS::StackName}-oracle"
+      DBInstanceIdentifier: !Sub '${AWS::StackName}-oracle'
       AllocatedStorage: !Ref AllocatedStorage
-      EnableCloudwatchLogsExports:
-        - oracle
       DBInstanceClass: db.m4.large
       StorageType: gp2
       DBName: eqrs
       DBParameterGroupName: !Ref ParameterGroupName
       DBSubnetGroupName: !Ref DbSubnetGroup
       Engine: oracle-ee
+      EngineVersion: 12.1.0.2.v18
       DeleteAutomatedBackups : true
       CopyTagsToSnapshot: true
       BackupRetentionPeriod: !If [ IsProd,  7, 1 ]

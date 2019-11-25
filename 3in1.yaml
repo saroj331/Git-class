@@ -38,7 +38,7 @@ Conditions:
       - "prodpreview"
 
 Resources:
-  OracleRds:
+  MyDB:
     Type: AWS::RDS::DBInstance
     DeletionPolicy: Snapshot
     Properties:

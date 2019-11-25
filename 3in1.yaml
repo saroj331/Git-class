@@ -70,17 +70,3 @@ Resources:
       MonitoringRoleArn: !Sub "arn:aws:iam::${AWS::AccountId}:role/RDS_Enhanced_Monitoring"
       MonitoringInterval: !If [ IsProd, 1, 60 ]
 
-Outputs:
-  DbConnectionString:
-    Description: A connection string to use for the DB
-    Value: !Sub "${OracleRds.Endpoint.Address}:${OracleRds.Endpoint.Port}/eqrs"
-    Export:
-      Name: !Sub "${AWS::StackName}-ConnString"
-  DbPort:
-    Value: !GetAtt OracleRds.Endpoint.Port
-    Export:
-      Name: !Sub "${AWS::StackName}-DbPort"
-  DbUrl:
-    Value: !GetAtt OracleRds.Endpoint.Address
-    Export:
-      Name: !Sub "${AWS::StackName}-DbUrl"

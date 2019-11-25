@@ -61,7 +61,7 @@ Resources:
         - !Ref SecurityGroup
       EnableIAMDatabaseAuthentication: false
       MultiAZ: !If [ IsProd, true, false ]
-      Port: "1521"
+      Port: '1521'
       DeletionProtection: true
       StorageEncrypted: true
       KmsKeyId: !Ref KmsKeyId
